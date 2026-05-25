@@ -50,6 +50,11 @@ bun run generate-key     # creates key.pem (gitignored)
 ```
 
 CI reads the key from the `EXTENSION_KEY_PEM` GitHub secret.
+```
+bun run generate-key # generates key.pem for stable extension ID
+Get-Content key.pem -Raw | gh secret set EXTENSION_KEY_PEM # sets secret for CI (win)
+gh secret set EXTENSION_KEY_PEM < key.pem # sets secret for CI (unix)
+```
 
 ## Project Structure
 
