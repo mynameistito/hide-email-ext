@@ -18,7 +18,8 @@
     "generate-key": "bun run scripts/generate-key.ts",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "changeset publish",
+    "release": "bun run build && bun run zip",
+    "ci:release": "bun run scripts/ci-release.ts",
     "prepare": "lefthook install"
   },
   "devDependencies": {
