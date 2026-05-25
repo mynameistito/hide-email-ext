@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Version or Publish
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      - name: Write key.pem
+        env:
+          EXTENSION_KEY_PEM: ${{ secrets.EXTENSION_KEY_PEM }}
+        run: echo "$EXTENSION_KEY_PEM" > key.pem
+
+      - name: Create Release Pull Request or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: bun run release
+          version: bun run version
+          title: "chore: version extension"
+          commit: "chore: version extension"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract published version
+        if: steps.changesets.outputs.published == 'true'
+        id: version
+        run: echo "version=$(jq -r .version package.json)" >> "$GITHUB_OUTPUT"
+
+  build-and-release:
+    name: Build & Ship Zips
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      - name: Write key.pem
+        env:
+          EXTENSION_KEY_PEM: ${{ secrets.EXTENSION_KEY_PEM }}
+        run: echo "$EXTENSION_KEY_PEM" > key.pem
+
+      - name: Build Chrome + Firefox
+        run: |
+          bun run build
+          bun run build:firefox
+
+      - name: Generate zips
+        run: |
+          bun run zip
+          bun run zip:firefox
+
+      - name: Rename zips for clarity
+        run: |
+          chrome_zip=$(ls .output/*-chrome.zip 2>/dev/null | head -1)
+          firefox_zip=$(ls .output/*-firefox.zip 2>/dev/null | head -1)
+          if [ -z "$chrome_zip" ]; then echo "Chrome zip not found" && exit 1; fi
+          if [ -z "$firefox_zip" ]; then echo "Firefox zip not found" && exit 1; fi
+          mv "$chrome_zip" .output/hide-email-chrome.zip
+          mv "$firefox_zip" .output/hide-email-firefox.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.release.outputs.version }}
+          name: v${{ needs.release.outputs.version }}
+          generate_release_notes: true
+          files: |
+            .output/hide-email-chrome.zip
+            .output/hide-email-firefox.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
