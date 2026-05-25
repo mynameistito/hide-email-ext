@@ -52,4 +52,7 @@ export default defineConfig({
     ...(key ? { key } : {}),
   },
   srcDir: ".",
+  suppressWarnings: {
+    firefoxDataCollection: true,
+  },
 });
