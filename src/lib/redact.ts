@@ -75,7 +75,14 @@ const tryReplaceText = (
   }
 };
 
-const scanAttributes = (root: Element, regex: RegExp): void => {
+const scanAttributes = (
+  root: Element,
+  regex: RegExp,
+  skipCache: WeakMap<Element, boolean>
+): void => {
+  if (shouldSkipCached(root, skipCache)) {
+    return;
+  }
   for (const attr of SCANNABLE_ATTRS) {
     const value = root.getAttribute(attr);
     if (!value) {
@@ -103,7 +110,7 @@ const scanSubtree = (
     }
   }
   if (root instanceof Element) {
-    scanAttributes(root, regex);
+    scanAttributes(root, regex, skipCache);
     for (const child of root.children) {
       scanSubtree(child, regex, skipCache);
     }
@@ -139,7 +146,7 @@ export const createRedactor = (root?: Document): Redactor => {
           mutation.type === "attributes" &&
           mutation.target instanceof Element
         ) {
-          scanAttributes(mutation.target, regex);
+          scanAttributes(mutation.target, regex, skipCache);
         }
         if (
           mutation.type === "characterData" &&
@@ -210,6 +217,7 @@ export const createRedactor = (root?: Document): Redactor => {
     observer.observe(doc.documentElement, {
       attributeFilter: [...SCANNABLE_ATTRS],
       attributes: true,
+      characterData: true,
       childList: true,
       subtree: true,
     });

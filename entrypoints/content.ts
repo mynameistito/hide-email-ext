@@ -20,6 +20,9 @@ export default defineContentScript({
       if (!started && list.length > 0) {
         started = true;
         redactor.start();
+      } else if (started && list.length === 0) {
+        started = false;
+        redactor.stop();
       }
     };
 

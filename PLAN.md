@@ -195,7 +195,7 @@ export function createRedactor(root?: Document): Redactor;
 - Case-insensitive match (`gi` flag + normalization on input).
 - Special regex chars in emails escaped (`+`, `.`).
 - Shadow DOM: best-effort — walk open shadow roots discovered during traversal.
-- Iframes: each frame gets its own content script via WXT manifest `all_frames: true`.
+- Iframes: runs only in the top frame (no `allFrames` / `all_frames` manifest key).
 - Input fields: **never** mutate user-editable values (would break forms).
 
 ---
