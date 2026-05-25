@@ -3,15 +3,27 @@ import { createRedactor } from "@/src/lib/redact";
 import { hiddenEmailsItem } from "@/src/lib/storage";
 
 export default defineContentScript({
-  allFrames: true,
   async main() {
-    const redactor = createRedactor();
+    let emails: string[] = [];
     try {
-      const emails = await hiddenEmailsItem.getValue();
-      redactor.setEmails(emails ?? []);
+      emails = (await hiddenEmailsItem.getValue()) ?? [];
     } catch {
-      redactor.setEmails([]);
+      emails = [];
     }
+
+    if (emails.length === 0) {
+      hiddenEmailsItem.watch((next) => {
+        if (next && next.length > 0) {
+          const redactor = createRedactor();
+          redactor.setEmails(next);
+          redactor.start();
+        }
+      });
+      return;
+    }
+
+    const redactor = createRedactor();
+    redactor.setEmails(emails);
     redactor.start();
     hiddenEmailsItem.watch((next) => {
       redactor.setEmails(next ?? []);
