@@ -30,7 +30,12 @@ jobs:
       - name: Write key.pem
         env:
           EXTENSION_KEY_PEM: ${{ secrets.EXTENSION_KEY_PEM }}
-        run: echo "$EXTENSION_KEY_PEM" > key.pem
+        run: |
+          if [ -z "$EXTENSION_KEY_PEM" ]; then
+            echo "::error::EXTENSION_KEY_PEM secret is missing or empty"
+            exit 1
+          fi
+          echo "$EXTENSION_KEY_PEM" > key.pem
 
       - name: Create Release Pull Request or Publish
         id: changesets
@@ -67,7 +72,12 @@ jobs:
       - name: Write key.pem
         env:
           EXTENSION_KEY_PEM: ${{ secrets.EXTENSION_KEY_PEM }}
-        run: echo "$EXTENSION_KEY_PEM" > key.pem
+        run: |
+          if [ -z "$EXTENSION_KEY_PEM" ]; then
+            echo "::error::EXTENSION_KEY_PEM secret is missing or empty"
+            exit 1
+          fi
+          echo "$EXTENSION_KEY_PEM" > key.pem
 
       - name: Build Chrome + Firefox
         run: |

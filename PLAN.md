@@ -665,30 +665,42 @@ on:
   push:
     branches: [main]
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   release:
     name: Version or Publish
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     outputs:
       published: ${{ steps.changesets.outputs.published }}
       version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
 
       - run: bun install --frozen-lockfile
 
       - name: Write key.pem
         env:
           EXTENSION_KEY_PEM: ${{ secrets.EXTENSION_KEY_PEM }}
-        run: echo "$EXTENSION_KEY_PEM" > key.pem
+        run: |
+          if [ -z "$EXTENSION_KEY_PEM" ]; then
+            echo "::error::EXTENSION_KEY_PEM secret is missing or empty"
+            exit 1
+          fi
+          echo "$EXTENSION_KEY_PEM" > key.pem
 
       - name: Create Release Pull Request or Publish
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b # v1
         with:
           publish: bun run release
           version: bun run version
@@ -710,16 +722,23 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
 
       - run: bun install --frozen-lockfile
 
       - name: Write key.pem
         env:
           EXTENSION_KEY_PEM: ${{ secrets.EXTENSION_KEY_PEM }}
-        run: echo "$EXTENSION_KEY_PEM" > key.pem
+        run: |
+          if [ -z "$EXTENSION_KEY_PEM" ]; then
+            echo "::error::EXTENSION_KEY_PEM secret is missing or empty"
+            exit 1
+          fi
+          echo "$EXTENSION_KEY_PEM" > key.pem
 
       - name: Build Chrome + Firefox
         run: |
@@ -741,16 +760,14 @@ jobs:
           mv "$firefox_zip" .output/hide-email-firefox.zip
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ needs.release.outputs.version }}
-          name: v${{ needs.release.outputs.version }}
-          generate_release_notes: true
-          files: |
-            .output/hide-email-chrome.zip
-            .output/hide-email-firefox.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          gh release create "v${{ needs.release.outputs.version }}"
+          --title "v${{ needs.release.outputs.version }}"
+          --generate-notes
+          .output/hide-email-chrome.zip
+          .output/hide-email-firefox.zip
 ```
 
 ### What happens on each merge to `main`
