@@ -1,6 +1,6 @@
 {
   "name": "hide-email-ext",
-  "version": "0.1.0",
+  "version": "0.2.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -18,8 +18,10 @@
     "generate-key": "bun run scripts/generate-key.ts",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "changeset publish",
-    "prepare": "lefthook install"
+    "release": "bun run build && bun run zip",
+    "ci:release": "bun run scripts/ci-release.ts",
+    "prepare": "lefthook install",
+    "test": "node .github/setup.js"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.0",
