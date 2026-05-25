@@ -92,20 +92,12 @@ const scanAttributes = (root: Element, regex: RegExp): void => {
   }
 };
 
-const MAX_SUBTREE_NODES = 500;
-
 const scanSubtree = (
   root: Node,
   regex: RegExp,
-  skipCache: WeakMap<Element, boolean>,
-  budget: { count: number }
+  skipCache: WeakMap<Element, boolean>
 ): void => {
-  if (budget.count > MAX_SUBTREE_NODES) {
-    return;
-  }
-
   for (const child of root.childNodes) {
-    budget.count += 1;
     if (child.nodeType === Node.TEXT_NODE) {
       tryReplaceText(child as Text, regex, skipCache);
     }
@@ -113,10 +105,7 @@ const scanSubtree = (
   if (root instanceof Element) {
     scanAttributes(root, regex);
     for (const child of root.children) {
-      if (budget.count > MAX_SUBTREE_NODES) {
-        return;
-      }
-      scanSubtree(child, regex, skipCache, budget);
+      scanSubtree(child, regex, skipCache);
     }
   }
 };
@@ -160,14 +149,14 @@ export const createRedactor = (root?: Document): Redactor => {
         }
         for (const node of mutation.addedNodes) {
           if (node instanceof Element) {
-            scanSubtree(node, regex, skipCache, { count: 0 });
+            scanSubtree(node, regex, skipCache);
           } else if (node.nodeType === Node.TEXT_NODE) {
             tryReplaceText(node as Text, regex, skipCache);
           }
         }
       }
     } else {
-      scanSubtree(doc.body ?? doc, regex, skipCache, { count: 0 });
+      scanSubtree(doc.body ?? doc, regex, skipCache);
     }
   };
 
@@ -205,7 +194,7 @@ export const createRedactor = (root?: Document): Redactor => {
       return;
     }
     skipCache = new WeakMap<Element, boolean>();
-    scanSubtree(doc.body ?? doc, regex, skipCache, { count: 0 });
+    scanSubtree(doc.body ?? doc, regex, skipCache);
   };
 
   const start = (): void => {

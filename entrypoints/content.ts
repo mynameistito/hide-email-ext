@@ -11,23 +11,22 @@ export default defineContentScript({
       emails = [];
     }
 
-    if (emails.length === 0) {
-      hiddenEmailsItem.watch((next) => {
-        if (next && next.length > 0) {
-          const redactor = createRedactor();
-          redactor.setEmails(next);
-          redactor.start();
-        }
-      });
-      return;
-    }
-
     const redactor = createRedactor();
-    redactor.setEmails(emails);
-    redactor.start();
-    hiddenEmailsItem.watch((next) => {
-      redactor.setEmails(next ?? []);
-    });
+    let started = false;
+
+    const apply = (next: string[] | null | undefined): void => {
+      const list = next ?? [];
+      redactor.setEmails(list);
+      if (!started && list.length > 0) {
+        started = true;
+        redactor.start();
+      }
+    };
+
+    if (emails.length > 0) {
+      apply(emails);
+    }
+    hiddenEmailsItem.watch(apply);
   },
   matches: ["<all_urls>"],
   runAt: "document_start",
