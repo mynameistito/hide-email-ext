@@ -1,5 +1,11 @@
 # hide-email-ext
 
+## 0.2.2
+
+### Patch Changes
+
+- 6a9f061: Suppress Firefox `data_collection_permissions` build warning in WXT config. Update `changesets/action` to v1.8.0 to fix deprecated `set-output` GitHub Actions warnings. Bump `actions/checkout` to v6 and `actions/cache` to v5.
+
 ## 0.2.1
 
 ### Patch Changes
