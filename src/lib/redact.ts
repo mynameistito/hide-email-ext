@@ -81,9 +81,10 @@ const scanAttributes = (
   skipCache: WeakMap<Element, boolean>
 ): void => {
   if (
-    SKIP_TAGS.has(root.tagName) ||
-    root.isContentEditable ||
-    root.dataset.redacted !== undefined
+    root instanceof HTMLElement &&
+    (SKIP_TAGS.has(root.tagName) ||
+      root.isContentEditable ||
+      root.dataset.redacted !== undefined)
   ) {
     return;
   }
