@@ -1,3 +1,4 @@
+import { createPublicKey } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -12,7 +13,10 @@ const loadKey = (): string | undefined => {
   if (!existsSync(keyPath)) {
     return undefined;
   }
-  return readFileSync(keyPath, "utf-8");
+  const privateKey = readFileSync(keyPath, "utf-8");
+  const publicKey = createPublicKey(privateKey);
+  const der = publicKey.export({ format: "der", type: "spki" });
+  return Buffer.from(der).toString("base64");
 };
 
 const key = loadKey();

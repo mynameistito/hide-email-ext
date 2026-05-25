@@ -10,7 +10,7 @@
     "build:firefox": "wxt build -b firefox",
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
-    "compile": "tsc --noEmit",
+    "compile": "bun run typecheck",
     "postinstall": "wxt prepare",
     "typecheck": "tsc --noEmit",
     "check": "ultracite check",
@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.0",
-    "@types/bun": "latest",
+    "@types/bun": "^1.2.0",
     "@types/chrome": "^0.1.42",
     "lefthook": "^2.1.8",
     "oxfmt": "^0.51.0",

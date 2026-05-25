@@ -610,19 +610,17 @@ Note: `release` no longer calls `bun run build` — the CI workflow handles buil
 
 ```jsonc
 {
-  "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+  "$schema": "https://unpkg.com/@changesets/config@3.1.4/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
   "linked": [],
-  "access": "restricted",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": [],
 }
 ```
 
-- `access: "restricted"` — this is a browser extension, not an npm package, but Changesets still needs this config. We use it purely for version tracking.
 - The version in `package.json` is the single source of truth and is synced to the manifest `version` field at build time.
 
 ### Syncing `package.json` version → manifest

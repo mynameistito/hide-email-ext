@@ -6,8 +6,12 @@ export default defineContentScript({
   allFrames: true,
   async main() {
     const redactor = createRedactor();
-    const emails = await hiddenEmailsItem.getValue();
-    redactor.setEmails(emails ?? []);
+    try {
+      const emails = await hiddenEmailsItem.getValue();
+      redactor.setEmails(emails ?? []);
+    } catch {
+      redactor.setEmails([]);
+    }
     redactor.start();
     hiddenEmailsItem.watch((next) => {
       redactor.setEmails(next ?? []);

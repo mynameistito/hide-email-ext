@@ -1,8 +1,16 @@
 import { generateKeyPairSync } from "node:crypto";
-import { writeFileSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const outPath = resolve(import.meta.dirname, "..", "key.pem");
+
+if (existsSync(outPath)) {
+  console.error(`Error: ${outPath} already exists.`);
+  console.error(
+    "Removing or overwriting this file will make it impossible to update the published extension."
+  );
+  process.exit(1);
+}
 
 const { privateKey } = generateKeyPairSync("rsa", {
   modulusLength: 2048,

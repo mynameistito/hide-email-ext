@@ -30,8 +30,12 @@ const renderList = (emails: NormalizedEmail[]): void => {
     btn.className = "remove-btn";
     btn.textContent = "\u00D7";
     btn.setAttribute("aria-label", `Remove ${email}`);
-    btn.addEventListener("click", () => {
-      removeHiddenEmail(email);
+    btn.addEventListener("click", async () => {
+      try {
+        await removeHiddenEmail(email);
+      } catch (error) {
+        errorSpan.textContent = `Failed to remove email: ${error instanceof Error ? error.message : "unknown error"}`;
+      }
     });
     li.append(span);
     li.append(btn);

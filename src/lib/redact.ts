@@ -38,42 +38,6 @@ const shouldSkip = (node: Node): boolean => {
   return false;
 };
 
-const scanTextNodes = (root: Node, regex: RegExp): number => {
-  let count = 0;
-  const walker = document.createTreeWalker(
-    root,
-    NodeFilter.SHOW_TEXT,
-    (node) => {
-      if (shouldSkip(node)) {
-        return NodeFilter.FILTER_REJECT;
-      }
-      return node.nodeValue && regex.test(node.nodeValue)
-        ? NodeFilter.FILTER_ACCEPT
-        : NodeFilter.FILTER_SKIP;
-    }
-  );
-
-  const nodes: Text[] = [];
-  let current: Text | null;
-  while ((current = walker.nextNode() as Text | null)) {
-    nodes.push(current);
-  }
-
-  for (const node of nodes) {
-    const original = node.nodeValue;
-    if (!original) {
-      continue;
-    }
-    regex.lastIndex = 0;
-    const replaced = original.replaceAll(regex, REDACTION_TOKEN);
-    if (replaced !== original) {
-      node.nodeValue = replaced;
-      count += 1;
-    }
-  }
-  return count;
-};
-
 const scanAttributes = (root: Element, regex: RegExp): void => {
   for (const attr of SCANNABLE_ATTRS) {
     const value = root.getAttribute(attr);
@@ -89,7 +53,18 @@ const scanAttributes = (root: Element, regex: RegExp): void => {
 };
 
 const scanSubtree = (root: Node, regex: RegExp): void => {
-  scanTextNodes(root, regex);
+  for (const child of root.childNodes) {
+    if (child.nodeType === Node.TEXT_NODE) {
+      const text = child as Text;
+      if (text.nodeValue && !shouldSkip(text)) {
+        regex.lastIndex = 0;
+        const replaced = text.nodeValue.replaceAll(regex, REDACTION_TOKEN);
+        if (replaced !== text.nodeValue) {
+          text.nodeValue = replaced;
+        }
+      }
+    }
+  }
   if (root instanceof Element) {
     scanAttributes(root, regex);
     for (const child of root.children) {
@@ -108,7 +83,9 @@ export const createRedactor = (root?: Document): Redactor => {
   const doc = root ?? document;
   let regex: RegExp | null = null;
   let observer: MutationObserver | null = null;
-  let pendingFrame: ReturnType<typeof setTimeout> | null = null;
+  let scheduled = false;
+  let pendingTimeout: ReturnType<typeof setTimeout> | null = null;
+  let pendingIdle: number | null = null;
 
   const flush = (mutations?: MutationRecord[]): void => {
     if (!regex) {
@@ -122,6 +99,19 @@ export const createRedactor = (root?: Document): Redactor => {
           mutation.target instanceof Element
         ) {
           scanAttributes(mutation.target, regex);
+        }
+        if (
+          mutation.type === "characterData" &&
+          mutation.target instanceof Text
+        ) {
+          const text = mutation.target;
+          if (text.nodeValue && !shouldSkip(text)) {
+            regex.lastIndex = 0;
+            const replaced = text.nodeValue.replaceAll(regex, REDACTION_TOKEN);
+            if (replaced !== text.nodeValue) {
+              text.nodeValue = replaced;
+            }
+          }
         }
         for (const node of mutation.addedNodes) {
           if (node instanceof Element) {
@@ -144,19 +134,23 @@ export const createRedactor = (root?: Document): Redactor => {
     } else {
       scanSubtree(doc.body ?? doc, regex);
     }
-
-    pendingFrame = null;
   };
 
   const scheduleFlush = (mutations?: MutationRecord[]): void => {
-    if (pendingFrame !== null) {
+    if (scheduled) {
       return;
     }
-    const run = () => flush(mutations);
+    scheduled = true;
+    const run = () => {
+      scheduled = false;
+      pendingTimeout = null;
+      pendingIdle = null;
+      flush(mutations);
+    };
     if ("requestIdleCallback" in window) {
-      requestIdleCallback(run, { timeout: 500 });
+      pendingIdle = requestIdleCallback(run, { timeout: 500 });
     } else {
-      pendingFrame = setTimeout(run, 100);
+      pendingTimeout = setTimeout(run, 100);
     }
   };
 
@@ -189,10 +183,15 @@ export const createRedactor = (root?: Document): Redactor => {
   const stop = (): void => {
     observer?.disconnect();
     observer = null;
-    if (pendingFrame !== null) {
-      clearTimeout(pendingFrame);
-      pendingFrame = null;
+    if (pendingTimeout !== null) {
+      clearTimeout(pendingTimeout);
+      pendingTimeout = null;
     }
+    if (pendingIdle !== null) {
+      cancelIdleCallback(pendingIdle);
+      pendingIdle = null;
+    }
+    scheduled = false;
   };
 
   return {

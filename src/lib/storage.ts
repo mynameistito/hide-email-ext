@@ -12,14 +12,18 @@ export const getHiddenEmails = (): Promise<NormalizedEmail[]> =>
 
 export const addHiddenEmail = async (email: NormalizedEmail): Promise<void> => {
   const current = await getHiddenEmails();
-  const updated = [...new Set([...current, email])];
-  await hiddenEmailsItem.setValue(updated);
+  if (current.includes(email)) {
+    return;
+  }
+  await hiddenEmailsItem.setValue([...current, email]);
 };
 
 export const removeHiddenEmail = async (
   email: NormalizedEmail
 ): Promise<void> => {
   const current = await getHiddenEmails();
-  const updated = current.filter((e) => e !== email);
-  await hiddenEmailsItem.setValue(updated);
+  if (!current.includes(email)) {
+    return;
+  }
+  await hiddenEmailsItem.setValue(current.filter((e) => e !== email));
 };

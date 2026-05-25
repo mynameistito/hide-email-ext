@@ -9,8 +9,11 @@ export const send = async (msg: Message): Promise<void> => {
     if (t.id !== undefined) {
       try {
         await browser.tabs.sendMessage(t.id, msg);
-      } catch {
-        // tab may not have content script running
+      } catch (error) {
+        const text = error instanceof Error ? error.message : String(error);
+        if (!text.includes("Receiving end does not exist")) {
+          console.error("Failed to send message to tab:", error);
+        }
       }
     }
   }
