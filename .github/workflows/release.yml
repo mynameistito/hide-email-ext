@@ -4,108 +4,28 @@ on:
   push:
     branches: [main]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   release:
-    name: Version or Publish
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    outputs:
-      published: ${{ steps.changesets.outputs.published }}
-      version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          persist-credentials: false
+      - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - uses: oven-sh/setup-bun@v2
 
       - run: bun install --frozen-lockfile
-
-      - name: Write key.pem
-        env:
-          EXTENSION_KEY_PEM: ${{ secrets.EXTENSION_KEY_PEM }}
-        run: |
-          if [ -z "$EXTENSION_KEY_PEM" ]; then
-            echo "::error::EXTENSION_KEY_PEM secret is missing or empty — cannot publish without a stable extension ID"
-            exit 1
-          else
-            echo "$EXTENSION_KEY_PEM" > key.pem
-          fi
 
       - name: Create Release Pull Request or Publish
-        id: changesets
-        uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b # v1
+        uses: changesets/action@v1
         with:
-          publish: bun run release
           version: bun run version
-          title: "chore: version extension"
-          commit: "chore: version extension"
+          publish: bun run ci:release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract published version
-        if: steps.changesets.outputs.published == 'true'
-        id: version
-        run: echo "version=$(jq -r .version package.json)" >> "$GITHUB_OUTPUT"
-
-  build-and-release:
-    name: Build & Ship Zips
-    needs: release
-    if: needs.release.outputs.published == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          persist-credentials: false
-
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
-
-      - run: bun install --frozen-lockfile
-
-      - name: Write key.pem
-        env:
           EXTENSION_KEY_PEM: ${{ secrets.EXTENSION_KEY_PEM }}
-        run: |
-          if [ -z "$EXTENSION_KEY_PEM" ]; then
-            echo "::error::EXTENSION_KEY_PEM secret is missing or empty — cannot publish without a stable extension ID"
-            exit 1
-          else
-            echo "$EXTENSION_KEY_PEM" > key.pem
-          fi
-
-      - name: Build Chrome + Firefox
-        run: |
-          bun run build
-          bun run build:firefox
-
-      - name: Generate zips
-        run: |
-          bun run zip
-          bun run zip:firefox
-
-      - name: Rename zips for clarity
-        run: |
-          chrome_zip=$(ls .output/*-chrome.zip 2>/dev/null | head -1)
-          firefox_zip=$(ls .output/*-firefox.zip 2>/dev/null | head -1)
-          if [ -z "$chrome_zip" ]; then echo "Chrome zip not found" && exit 1; fi
-          if [ -z "$firefox_zip" ]; then echo "Firefox zip not found" && exit 1; fi
-          mv "$chrome_zip" .output/hide-email-chrome.zip
-          mv "$firefox_zip" .output/hide-email-firefox.zip
-
-      - name: Create GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >
-          gh release create "v${{ needs.release.outputs.version }}"
-          --title "v${{ needs.release.outputs.version }}"
-          --generate-notes
-          .output/hide-email-chrome.zip
-          .output/hide-email-firefox.zip
+          REQUIRE_CHROME_KEY: "1"
