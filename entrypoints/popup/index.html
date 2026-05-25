@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hide Email</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="container">
+      <label for="email-input" class="sr-only">Email address to hide</label>
+      <input
+        type="email"
+        id="email-input"
+        placeholder="Enter email to hide"
+        aria-describedby="error"
+      />
+      <button id="add-btn" class="add-btn" type="button">Add</button>
+      <span id="error" class="error" aria-live="polite"></span>
+      <ul id="email-list"></ul>
+    </div>
+    <script type="module" src="popup.ts"></script>
+  </body>
+</html>
