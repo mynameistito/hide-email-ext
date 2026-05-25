@@ -18,8 +18,9 @@ const remoteTag = execSync(`git ls-remote --tags origin refs/tags/${tag}`, {
   encoding: "utf-8",
 }).trim();
 if (remoteTag) {
-  console.log(`Tag ${tag} already published on origin. Skipping release.`);
-  process.exit(0);
+  console.log(
+    `Tag ${tag} exists on origin — will ensure release assets are uploaded.`
+  );
 }
 
 const keyPath = resolve(ROOT, "key.pem");
@@ -59,7 +60,9 @@ try {
 } catch {
   execSync(`git tag ${tag}`, { cwd: ROOT });
 }
-execSync(`git push origin ${tag}`, { cwd: ROOT });
+if (!remoteTag) {
+  execSync(`git push origin ${tag}`, { cwd: ROOT });
+}
 
 let body = `Release ${tag}`;
 const changelogPath = resolve(ROOT, "CHANGELOG.md");
