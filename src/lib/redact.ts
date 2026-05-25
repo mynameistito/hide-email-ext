@@ -80,6 +80,13 @@ const scanAttributes = (
   regex: RegExp,
   skipCache: WeakMap<Element, boolean>
 ): void => {
+  if (
+    SKIP_TAGS.has(root.tagName) ||
+    root.isContentEditable ||
+    root.dataset.redacted !== undefined
+  ) {
+    return;
+  }
   if (shouldSkipCached(root, skipCache)) {
     return;
   }

@@ -32,7 +32,8 @@ jobs:
           EXTENSION_KEY_PEM: ${{ secrets.EXTENSION_KEY_PEM }}
         run: |
           if [ -z "$EXTENSION_KEY_PEM" ]; then
-            echo "::warning::EXTENSION_KEY_PEM secret is missing or empty — extension ID will be random"
+            echo "::error::EXTENSION_KEY_PEM secret is missing or empty — cannot publish without a stable extension ID"
+            exit 1
           else
             echo "$EXTENSION_KEY_PEM" > key.pem
           fi
@@ -74,7 +75,8 @@ jobs:
           EXTENSION_KEY_PEM: ${{ secrets.EXTENSION_KEY_PEM }}
         run: |
           if [ -z "$EXTENSION_KEY_PEM" ]; then
-            echo "::warning::EXTENSION_KEY_PEM secret is missing or empty — extension ID will be random"
+            echo "::error::EXTENSION_KEY_PEM secret is missing or empty — cannot publish without a stable extension ID"
+            exit 1
           else
             echo "$EXTENSION_KEY_PEM" > key.pem
           fi
