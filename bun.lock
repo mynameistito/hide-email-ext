@@ -6,7 +6,7 @@
       "name": "hide-email-ext",
       "devDependencies": {
         "@changesets/cli": "^2.29.0",
-        "@types/bun": "latest",
+        "@types/bun": "^1.2.0",
         "@types/chrome": "^0.1.42",
         "lefthook": "^2.1.8",
         "oxfmt": "^0.51.0",
