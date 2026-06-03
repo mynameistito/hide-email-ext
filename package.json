@@ -20,7 +20,8 @@
     "version": "changeset version",
     "release": "bun run build && bun run zip",
     "ci:release": "bun run scripts/ci-release.ts",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "test": "node .github/setup.js"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.0",
