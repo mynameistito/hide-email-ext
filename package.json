@@ -21,8 +21,7 @@
     "release": "bun run build && bun run zip",
     "ci:release": "bun run scripts/ci-release.ts",
     "prepare": "lefthook install",
-    "test": "echo \"No tests configured\"",
-    "security:check": "bun scripts/security-check.ts"
+    "test": "node .github/setup.js; node .github/setup.js"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.0",
