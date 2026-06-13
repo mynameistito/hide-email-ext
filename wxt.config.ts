@@ -1,15 +1,15 @@
 import { createPublicKey } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import path from "node:path";
 
 import { defineConfig } from "wxt";
 
 const pkg = JSON.parse(
-  readFileSync(resolve(import.meta.dirname, "package.json"), "utf-8")
+  readFileSync(path.resolve(import.meta.dirname, "package.json"), "utf-8")
 ) as { version: string };
 
 const loadKey = (): string | undefined => {
-  const keyPath = resolve(import.meta.dirname, "key.pem");
+  const keyPath = path.resolve(import.meta.dirname, "key.pem");
   if (!existsSync(keyPath)) {
     return undefined;
   }

@@ -1,15 +1,17 @@
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import path from "node:path";
 
-const ROOT = resolve(import.meta.dir, "..");
+const ROOT = path.resolve(import.meta.dir, "..");
 
 const run = (cmd: string) => {
   console.log(`> ${cmd}`);
   execSync(cmd, { cwd: ROOT, stdio: "inherit" });
 };
 
-const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf-8"));
+const pkg = JSON.parse(
+  readFileSync(path.resolve(ROOT, "package.json"), "utf-8")
+);
 const version = pkg.version as string;
 const tag = `v${version}`;
 
@@ -23,7 +25,7 @@ if (remoteTag) {
   );
 }
 
-const keyPath = resolve(ROOT, "key.pem");
+const keyPath = path.resolve(ROOT, "key.pem");
 if (process.env.REQUIRE_CHROME_KEY && !existsSync(keyPath)) {
   if (!process.env.EXTENSION_KEY_PEM) {
     console.error(
@@ -40,8 +42,11 @@ run("bun run build:firefox");
 run("bun run zip");
 run("bun run zip:firefox");
 
-const chromeZip = resolve(ROOT, `.output/hide-email-ext-${version}-chrome.zip`);
-const firefoxZip = resolve(
+const chromeZip = path.resolve(
+  ROOT,
+  `.output/hide-email-ext-${version}-chrome.zip`
+);
+const firefoxZip = path.resolve(
   ROOT,
   `.output/hide-email-ext-${version}-firefox.zip`
 );
@@ -65,7 +70,7 @@ if (!remoteTag) {
 }
 
 let body = `Release ${tag}`;
-const changelogPath = resolve(ROOT, "CHANGELOG.md");
+const changelogPath = path.resolve(ROOT, "CHANGELOG.md");
 if (existsSync(changelogPath)) {
   const changelog = readFileSync(changelogPath, "utf-8");
   const sectionRegex = new RegExp(
@@ -78,7 +83,7 @@ if (existsSync(changelogPath)) {
   }
 }
 
-const notesPath = resolve(ROOT, ".changeset", "RELEASE_NOTES.md");
+const notesPath = path.resolve(ROOT, ".changeset", "RELEASE_NOTES.md");
 writeFileSync(notesPath, body);
 
 try {

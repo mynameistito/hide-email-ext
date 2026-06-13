@@ -126,9 +126,9 @@ const scanSubtree = (
 };
 
 export interface Redactor {
-  setEmails(emails: NormalizedEmail[]): void;
-  start(): void;
-  stop(): void;
+  setEmails: (emails: NormalizedEmail[]) => void;
+  start: () => void;
+  stop: () => void;
 }
 
 export const createRedactor = (root?: Document): Redactor => {
