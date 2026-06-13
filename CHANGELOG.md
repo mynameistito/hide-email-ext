@@ -1,5 +1,11 @@
 # hide-email-ext
 
+## 0.2.3
+
+### Patch Changes
+
+- 85842a2: Update development tooling packages and fix Ultracite lint issues.
+
 ## 0.2.2
 
 ### Patch Changes
