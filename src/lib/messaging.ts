@@ -5,8 +5,13 @@ export const send = async (msg: Message): Promise<void> => {
     active: true,
     currentWindow: true,
   });
-  for (const t of tabs) {
-    if (t.id !== undefined) {
+
+  await Promise.all(
+    tabs.map(async (t) => {
+      if (t.id === undefined) {
+        return;
+      }
+
       try {
         await browser.tabs.sendMessage(t.id, msg);
       } catch (error) {
@@ -15,8 +20,8 @@ export const send = async (msg: Message): Promise<void> => {
           console.error("Failed to send message to tab:", error);
         }
       }
-    }
-  }
+    })
+  );
 };
 
 export const onMessage = (handler: (msg: Message) => void): (() => void) => {

@@ -1,8 +1,8 @@
 import { generateKeyPairSync } from "node:crypto";
 import { existsSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import path from "node:path";
 
-const outPath = resolve(import.meta.dirname, "..", "key.pem");
+const outPath = path.resolve(import.meta.dirname, "..", "key.pem");
 
 if (existsSync(outPath)) {
   console.error(`Error: ${outPath} already exists.`);
