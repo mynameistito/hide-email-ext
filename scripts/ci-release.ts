@@ -20,9 +20,15 @@ const remoteTag = execSync(`git ls-remote --tags origin refs/tags/${tag}`, {
   encoding: "utf-8",
 }).trim();
 if (remoteTag) {
-  console.log(
-    `Tag ${tag} exists on origin — will ensure release assets are uploaded.`
-  );
+  console.log(`Tag ${tag} exists on origin.`);
+
+  try {
+    execSync(`gh release view ${tag}`, { cwd: ROOT, stdio: "ignore" });
+    console.log(`Release ${tag} already exists; skipping publish.`);
+    process.exit(0);
+  } catch {
+    console.log(`Release ${tag} does not exist yet; publishing assets.`);
+  }
 }
 
 const keyPath = path.resolve(ROOT, "key.pem");
