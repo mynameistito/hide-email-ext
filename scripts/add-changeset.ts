@@ -11,7 +11,11 @@
  */
 
 import { randomBytes } from "node:crypto";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+
+interface PackageJson {
+  name?: unknown;
+}
 
 const args = process.argv.slice(2);
 
@@ -35,12 +39,21 @@ if (!summary.trim()) {
   process.exit(1);
 }
 
+const packageJson = JSON.parse(
+  readFileSync("package.json", "utf-8")
+) as PackageJson;
+
+if (typeof packageJson.name !== "string" || !packageJson.name.trim()) {
+  console.error("package.json must include a non-empty name field");
+  process.exit(1);
+}
+
 // Generate random filename (like changeset does)
 const id = randomBytes(4).toString("hex");
 const filename = `.changeset/${id}.md`;
 
 const content = `---
-"hide-email-ext": ${type}
+"${packageJson.name}": ${type}
 ---
 
 ${summary.trim()}
