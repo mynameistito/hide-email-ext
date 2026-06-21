@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
@@ -15,13 +15,42 @@ const pkg = JSON.parse(
 const version = pkg.version as string;
 const tag = `v${version}`;
 
+interface ReleaseView {
+  assets?: { name?: string }[];
+}
+
+const getReleaseView = (): ReleaseView | null => {
+  const result = spawnSync("gh", ["release", "view", tag, "--json", "assets"], {
+    cwd: ROOT,
+    encoding: "utf-8",
+  });
+
+  if (result.status === 0) {
+    return JSON.parse(result.stdout) as ReleaseView;
+  }
+
+  const stderr = result.stderr.trim();
+  if (/not found|HTTP 404/iu.test(stderr)) {
+    return null;
+  }
+
+  console.error(stderr || `Failed to check release ${tag}.`);
+  process.exit(result.status ?? 1);
+};
+
 const remoteTag = execSync(`git ls-remote --tags origin refs/tags/${tag}`, {
   cwd: ROOT,
   encoding: "utf-8",
 }).trim();
+const release = getReleaseView();
+
 if (remoteTag) {
+  console.log(`Tag ${tag} exists on origin.`);
+}
+
+if (release) {
   console.log(
-    `Tag ${tag} exists on origin — will ensure release assets are uploaded.`
+    `Release ${tag} already exists; missing assets will be uploaded.`
   );
 }
 
@@ -50,6 +79,7 @@ const firefoxZip = path.resolve(
   ROOT,
   `.output/hide-email-ext-${version}-firefox.zip`
 );
+const releaseAssets = [chromeZip, firefoxZip];
 
 if (!existsSync(chromeZip)) {
   console.error(`Chrome zip not found at ${chromeZip}`);
@@ -86,10 +116,25 @@ if (existsSync(changelogPath)) {
 const notesPath = path.resolve(ROOT, ".changeset", "RELEASE_NOTES.md");
 writeFileSync(notesPath, body);
 
-try {
-  run(
-    `gh release create ${tag} --title "${tag}" --notes-file "${notesPath}" "${chromeZip}" "${firefoxZip}"`
+if (release) {
+  const existingAssetNames = new Set(
+    release.assets?.flatMap((asset) => (asset.name ? [asset.name] : []))
   );
-} catch {
-  run(`gh release upload ${tag} "${chromeZip}" "${firefoxZip}" --clobber`);
+  const missingAssets = releaseAssets.filter(
+    (asset) => !existingAssetNames.has(path.basename(asset))
+  );
+
+  if (missingAssets.length === 0) {
+    console.log(`Release ${tag} already has all expected assets.`);
+    process.exit(0);
+  }
+
+  run(
+    `gh release upload ${tag} ${missingAssets.map((asset) => `"${asset}"`).join(" ")}`
+  );
+  process.exit(0);
 }
+
+run(
+  `gh release create ${tag} --title "${tag}" --notes-file "${notesPath}" "${chromeZip}" "${firefoxZip}"`
+);
