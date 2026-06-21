@@ -11,7 +11,7 @@
  */
 
 import { randomBytes } from "node:crypto";
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 
 const args = process.argv.slice(2);
 
@@ -40,12 +40,13 @@ const id = randomBytes(4).toString("hex");
 const filename = `.changeset/${id}.md`;
 
 const content = `---
-"hex-app": ${type}
+"hide-email-ext": ${type}
 ---
 
 ${summary.trim()}
 `;
 
+mkdirSync(".changeset", { recursive: true });
 writeFileSync(filename, content);
 console.log(`✓ Created changeset: ${filename}`);
 console.log(`  Type: ${type}`);

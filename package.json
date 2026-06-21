@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit",
     "check": "ultracite check",
     "fix": "ultracite fix",
-    "generate-key": "bun run /scripts/generate-key.ts",
+    "generate-key": "bun run ./scripts/generate-key.ts",
     "changeset": "changeset",
     "changeset-add": "bun run ./scripts/add-changeset.ts",
     "version": "changeset version",
