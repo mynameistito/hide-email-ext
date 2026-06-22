@@ -16,11 +16,12 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "paths": {
-      "@/*": ["./src/*"],
+      "@/*": ["./*"],
       "@tests/*": ["./tests/*"]
     }
   },
   "include": [
+    "entrypoints",
     "src",
     "scripts",
     "tests",
