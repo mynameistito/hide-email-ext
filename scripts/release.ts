@@ -70,6 +70,9 @@ const requireStableChromeKey = (): void => {
   process.exit(1);
 };
 
+const escapeRegex = (str: string): string =>
+  str.replaceAll(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+
 const readReleaseNotes = (version: string): string => {
   const changelogPath = path.resolve(root, "CHANGELOG.md");
   if (!existsSync(changelogPath)) {
@@ -77,7 +80,7 @@ const readReleaseNotes = (version: string): string => {
   }
 
   const changelog = readFileSync(changelogPath, "utf-8");
-  const escapedVersion = version.replaceAll(".", "\\.");
+  const escapedVersion = escapeRegex(version);
   const sectionRegex = new RegExp(
     `## ${escapedVersion}\n([\\s\\S]*?)(?=\n## |$)`,
     "u"
@@ -144,8 +147,14 @@ try {
     "--target",
     target,
   ]);
-} catch {
-  const present = fetchReleaseAssetNames(tag);
+} catch (error) {
+  let present: string[];
+  try {
+    present = fetchReleaseAssetNames(tag);
+  } catch {
+    throw error;
+  }
+
   const missing = expectedAssets(pkg.name, pkg.version).filter(
     (asset) => !present.includes(asset)
   );
