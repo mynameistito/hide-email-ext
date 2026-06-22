@@ -4,8 +4,10 @@
  *
  * Run once per repo. The file is gitignored.
  */
-import { createHash, createPublicKey } from "node:crypto";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
+
+import { pemToSpkiBase64 } from "./lib/crypto";
 
 const KEY_PATH = "key.pem";
 const args = process.argv.slice(2).filter((arg) => arg !== "--");
@@ -47,15 +49,7 @@ if (proc.exitCode !== 0) {
 }
 
 const pem = readFileSync(KEY_PATH, "utf-8");
-const spkiPem = createPublicKey(pem).export({
-  format: "pem",
-  type: "spki",
-}) as string;
-
-const spkiB64 = spkiPem
-  .replaceAll("-----BEGIN PUBLIC KEY-----", "")
-  .replaceAll("-----END PUBLIC KEY-----", "")
-  .replaceAll(/\s+/gu, "");
+const spkiB64 = pemToSpkiBase64(pem);
 
 // Chromium extension ID: sha256(SPKI DER) -> take first 16 bytes -> map 0-f to a-p
 const spkiDer = Buffer.from(spkiB64, "base64");

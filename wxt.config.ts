@@ -1,8 +1,9 @@
-import { createPublicKey } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { defineConfig } from "wxt";
+
+import { pemToSpkiBase64 } from "./scripts/lib/crypto";
 
 const pkg = JSON.parse(
   readFileSync(path.resolve(import.meta.dirname, "package.json"), "utf-8")
@@ -31,15 +32,7 @@ const loadManifestKey = (): string | undefined => {
     return;
   }
 
-  const spkiPem = createPublicKey(pem).export({
-    format: "pem",
-    type: "spki",
-  }) as string;
-
-  return spkiPem
-    .replaceAll("-----BEGIN PUBLIC KEY-----", "")
-    .replaceAll("-----END PUBLIC KEY-----", "")
-    .replaceAll(/\s+/gu, "");
+  return pemToSpkiBase64(pem);
 };
 
 export default defineConfig({
