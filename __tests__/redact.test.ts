@@ -193,27 +193,40 @@ describe("redactor", () => {
   });
 
   test("scans after DOMContentLoaded when document is loading", async () => {
-    Object.defineProperty(document, "readyState", {
-      configurable: true,
-      value: "loading",
-    });
+    const originalDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      "readyState"
+    );
 
-    document.body.innerHTML = `<p>${email}</p>`;
+    try {
+      Object.defineProperty(document, "readyState", {
+        configurable: true,
+        value: "loading",
+      });
 
-    redactor = createRedactor();
-    redactor.setEmails([email]);
-    redactor.start();
-    await flush();
+      document.body.innerHTML = `<p>${email}</p>`;
 
-    expect(document.body.textContent).toContain(email);
+      redactor = createRedactor();
+      redactor.setEmails([email]);
+      redactor.start();
+      await flush();
 
-    Object.defineProperty(document, "readyState", {
-      configurable: true,
-      value: "complete",
-    });
-    document.dispatchEvent(new Event("DOMContentLoaded"));
-    await flush();
+      expect(document.body.textContent).toContain(email);
 
-    expect(document.body.textContent).toContain(REDACTION_TOKEN);
+      Object.defineProperty(document, "readyState", {
+        configurable: true,
+        value: "complete",
+      });
+      document.dispatchEvent(new Event("DOMContentLoaded"));
+      await flush();
+
+      expect(document.body.textContent).toContain(REDACTION_TOKEN);
+    } finally {
+      if (originalDescriptor) {
+        Object.defineProperty(document, "readyState", originalDescriptor);
+      } else {
+        delete (document as { readyState?: DocumentReadyState }).readyState;
+      }
+    }
   });
 });
