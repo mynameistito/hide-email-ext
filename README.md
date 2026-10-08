@@ -1,5 +1,7 @@
 # Hide Email
 
+> **Archived:** This extension is now maintained in the [browser-extensions monorepo](https://github.com/mynameistito/browser-extensions/tree/main/apps/hide-email-ext). This repository is read-only; use the monorepo for future development and releases.
+
 A cross-browser extension that scans every web page for a user-defined list of email addresses and replaces each occurrence with `[Email Redacted]`. Built with [WXT](https://wxt.dev), TypeScript, and Bun.
 
 ## Features
